@@ -347,7 +347,7 @@ namespace GLIB.Inventory
 			return true;
 		}
 
-		public bool RemoveSilently(E element)
+		private bool RemoveSilently(E element)
 		{
 			foreach (Element e in elements.Values)
 				if (e.value == element)
@@ -359,7 +359,7 @@ namespace GLIB.Inventory
 			return false;
 		}
 
-		public E RemoveSilently(Slot slot)
+		private E RemoveSilently(Slot slot)
 		{
 			Element element = elements[grid[slot.x, slot.y]];
 
