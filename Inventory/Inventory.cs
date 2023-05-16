@@ -82,14 +82,15 @@ namespace GLIB.Inventory
 
 		public bool Move(E element, Slot newSlot, bool rotated)
 		{
-			Size newSize = sizeOf(element).Rotated(rotated);
+			Size sizeOfEl = sizeOf(element);
+			Size newSize = sizeOfEl.Rotated(rotated);
 			if (!newSize.IsPhysical())
 				throw new Exception("The dimentions of the element's size must be greater than 0.");
 
 			if (!Contains(element))
 				throw new Exception("The element is not present in the inventory.");
 			Element oldEl = elements.Values.First(x => x.value == element);
-			Size oldSize = newSize.Rotated(oldEl.rotated);
+			Size oldSize = sizeOfEl.Rotated(oldEl.rotated);
 			Slot oldSlot = oldEl.slot;
 			int dictKey = oldEl.dictKey;
 
