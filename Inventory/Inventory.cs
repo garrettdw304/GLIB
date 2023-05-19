@@ -260,6 +260,11 @@ namespace GLIB.Inventory
 			contentsChanged -= action;
 		}
 
+		public void CallContentsChanged()
+		{
+			contentsChanged?.Invoke();
+		}
+
 		public bool IsRotated(E element)
 		{
 			return elements.Values.First(x => x.value == element).rotated;
