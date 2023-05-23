@@ -61,7 +61,7 @@ namespace GLIB.Inventory
 				throw new Exception("The dimentions of the element's size must be greater than 0.");
 
 			if (Contains(element))
-				throw new Exception("The element is already present in the inventory.");
+				return false;
 
 			if (rotated)
 				size = size.Rotated();
