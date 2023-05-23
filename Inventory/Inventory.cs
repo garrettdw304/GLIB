@@ -36,7 +36,7 @@ namespace GLIB.Inventory
 				throw new Exception("The dimentions of the element's size must be greater than 0.");
 
 			if (Contains(element))
-				throw new Exception("The element is already present in the inventory.");
+				return false;
 
 			for (int y = 0; y < Y; y++)
 				for (int x = 0; x < X; x++)
