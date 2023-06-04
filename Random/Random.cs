@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
-// higher weight -> rarer
-namespace GLIB.Random
+﻿namespace GLIB.Random
 {
+	// higher weight -> rarer
 	public class Random
 	{
 		public delegate int GetWeight<T>(T element);
