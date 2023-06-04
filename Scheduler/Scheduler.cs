@@ -81,7 +81,6 @@
 			if (checks == maxChecks)
 			{
 				schedule.Clear();
-				nextEventId = 0;
 				throw new Exception("Possible endless loop detected! schedule cleared. If this was not an error, increase the max checks.");
 			}
 
