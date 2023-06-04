@@ -12,7 +12,7 @@ namespace GLIB.Random
 		public delegate int GetWeight<T>(T element);
 		public delegate int RandomProvider(int minInclusive, int maxExclusive);
 
-		public static readonly RandomProvider DEFAULT_RANDOM_PROVIDER = (a, b) => new System.Random((int)DateTime.Now.Ticks).Next(a, b);
+		private static readonly RandomProvider DEFAULT_RANDOM_PROVIDER = (a, b) => new System.Random((int)DateTime.Now.Ticks).Next(a, b);
 
 		/// <summary>
 		/// Returns a random element from the collection, chosen using a weighted system.
@@ -61,7 +61,9 @@ namespace GLIB.Random
 		/// <returns>The element that was chosen from elements.</returns>
 		public static T GetRandom<T>(ICollection<T> elements, GetWeight<T> weightGetter, RandomProvider randomProvider)
 		{
-			int totalWeight = GetTotalWeight(elements, weightGetter);
+			int totalWeight = 0;
+			foreach (T element in elements)
+				totalWeight += weightGetter(element);
 
 			int roll = randomProvider(0, totalWeight);
 
@@ -74,15 +76,6 @@ namespace GLIB.Random
 			}
 
 			return elements.First();
-		}
-
-		private static int GetTotalWeight<T>(ICollection<T> collection, GetWeight<T> weightGetter)
-		{
-			int totalWeight = 0;
-			foreach (T element in collection)
-				totalWeight += weightGetter(element);
-
-			return totalWeight;
 		}
 	}
 }
