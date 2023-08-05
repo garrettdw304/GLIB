@@ -1,4 +1,6 @@
-﻿namespace GLIB.Inventory
+﻿using System.Text;
+
+namespace GLIB.Inventory
 {
 	[Serializable]
 	public struct Size
@@ -52,7 +54,8 @@
 
         public override string ToString()
         {
-            return $"<{x}, {y}>";
+			StringBuilder sb = new StringBuilder();
+            return sb.Append('<').Append(x).Append(", ").Append(y).Append('>').ToString();
         }
     }
 }

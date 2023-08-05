@@ -1,4 +1,6 @@
-﻿namespace GLIB.Inventory
+﻿using System.Text;
+
+namespace GLIB.Inventory
 {
 	public struct Slot
 	{
@@ -39,7 +41,8 @@
 
         public override string ToString()
         {
-            return $"<{x}, {y}>";
+            StringBuilder sb = new StringBuilder();
+            return sb.Append('<').Append(x).Append(", ").Append(y).Append('>').ToString();
         }
     }
 }
