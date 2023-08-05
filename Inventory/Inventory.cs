@@ -13,7 +13,7 @@ namespace GLIB.Inventory
 
 		protected SizeOf sizeOf;
 		private Predicate<E> filter;
-		private Action contentsChanged;
+		public event Action ContentsChanged;
 
 		public Inventory(int x, int y, SizeOf sizeOf, Predicate<E> filter = null)
 		{
@@ -75,7 +75,7 @@ namespace GLIB.Inventory
 
 			SetSlots(slot, size, dictKey);
 
-			contentsChanged?.Invoke();
+			ContentsChanged?.Invoke();
 
 			return true;
 		}
@@ -102,7 +102,7 @@ namespace GLIB.Inventory
 			oldEl.slot = newSlot;
 			oldEl.rotated = rotated;
 
-			contentsChanged?.Invoke();
+			ContentsChanged?.Invoke();
 			return true;
 		}
 
@@ -172,7 +172,7 @@ namespace GLIB.Inventory
 
 			SetSlots(element.slot, sizeOf(element.value).Rotated(element.rotated));
 
-			contentsChanged?.Invoke();
+			ContentsChanged?.Invoke();
 
 			return element.value;
 		}
@@ -229,7 +229,7 @@ namespace GLIB.Inventory
 				addedElements.Add(element);
 			}
 
-			contentsChanged?.Invoke();
+			ContentsChanged?.Invoke();
 
 			return true;
 		}
@@ -242,7 +242,7 @@ namespace GLIB.Inventory
 
 			elements.Clear();
 
-			contentsChanged?.Invoke();
+			ContentsChanged?.Invoke();
 		}
 
 		public bool IsEmpty()
@@ -252,17 +252,17 @@ namespace GLIB.Inventory
 
 		public void AddContentsChanged(Action action)
 		{
-			contentsChanged += action;
+			ContentsChanged += action;
 		}
 
 		public void RemoveContentsChanged(Action action)
 		{
-			contentsChanged -= action;
+			ContentsChanged -= action;
 		}
 
 		public void CallContentsChanged()
 		{
-			contentsChanged?.Invoke();
+			ContentsChanged?.Invoke();
 		}
 
 		public bool IsRotated(E element)
