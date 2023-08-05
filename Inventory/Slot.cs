@@ -26,5 +26,20 @@
 		{
 			return left.x != right.x || left.y != right.y;
 		}
-	}
+
+        public override bool Equals(object obj)
+        {
+            return base.Equals(obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return $"<{x}, {y}>";
+        }
+    }
 }
