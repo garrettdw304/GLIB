@@ -29,5 +29,30 @@
 			string[] strs = str.Split(' ');
 			return new Size(int.Parse(strs[0]), int.Parse(strs[1]));
 		}
-	}
+
+        public static bool operator ==(Size left, Size right)
+        {
+            return left.x == right.x && left.y == right.y;
+        }
+
+        public static bool operator !=(Size left, Size right)
+        {
+            return left.x != right.x || left.y != right.y;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return base.Equals(obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return $"<{x}, {y}>";
+        }
+    }
 }
