@@ -69,7 +69,7 @@ namespace GLIB.Inventory
 			if (!WillFit(slot, size))
 				return false;
 
-			int dictKey = GetDictKey();
+			int dictKey = GetNewDictKey();
 
 			elements.Add(dictKey, new Element(element, slot, rotated, dictKey));
 
@@ -317,7 +317,16 @@ namespace GLIB.Inventory
 			return true;
 		}
 
-		private int GetDictKey()
+		private int GetDictKey(E e)
+		{
+			foreach (Element e2 in elements.Values)
+				if (e2.value == e)
+					return e2.dictKey;
+
+			return 0;
+		}
+
+		private int GetNewDictKey()
 		{
 			for (int i = 1; i < int.MaxValue; i++)
 				if (!elements.ContainsKey(i))
@@ -369,7 +378,7 @@ namespace GLIB.Inventory
 			if (!WillFit(slot, size))
 				return false;
 
-			int dictKey = GetDictKey();
+			int dictKey = GetNewDictKey();
 
 			elements.Add(dictKey, new Element(element, slot, rotated, dictKey));
 
