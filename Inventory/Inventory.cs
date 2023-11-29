@@ -269,6 +269,22 @@ namespace GLIB.Inventory
 		{
 			return elements.Values.First(x => x.value == element).rotated;
 		}
+
+        /// <summary>
+		/// Tries to add/move the item to the slot indicated, and returns true if it would be added, false if not.
+        /// </summary>
+        /// <returns>
+        /// Returns true if:
+        /// <para/>1. There are no items in the slots this item would take up.
+        /// <para/>2. The filter will allow the item into the inventory.
+        /// <para/>Else false.
+		/// </returns>
+        public bool TestAdd(Slot slot, E element, bool rotate = false)
+		{
+			Size size = sizeOf(element);
+			int ignore = GetDictKey(element);
+			return filter(element) && WillFit(slot, rotate ? size.Rotated() : size, ignore);
+		}
 		#endregion public
 
 		#region private
