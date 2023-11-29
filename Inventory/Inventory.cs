@@ -142,6 +142,15 @@ namespace GLIB.Inventory
 			return list;
 		}
 
+		public Element GetElement(E element)
+		{
+			foreach (Element e in elements.Values)
+				if (e.value == element)
+					return e.Copy();
+
+			return null;
+		}
+
 		public List<Element> GetAllElements()
 		{
 			List<Element> toReturn = new();
