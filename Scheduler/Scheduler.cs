@@ -135,11 +135,9 @@
 			{
 				throw new Exception("Error while trying to execute event's action.", ex);
 			}
-			finally
-			{
-				if (schedule.Count > 0)
-					Check(++checks, currentTime);
-			}
+
+			if (schedule.Count > 0)
+				Check(++checks, currentTime);
 		}
 
 		/// <summary>
@@ -166,5 +164,7 @@
 		{
 			public MaxChecksReachedException(string message) : base(message) { }
 		}
+
+		public class EventInvokedExceptionException
 	}
 }
