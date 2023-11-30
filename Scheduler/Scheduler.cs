@@ -81,7 +81,7 @@
 			if (checks == maxChecks)
 			{
 				schedule.Clear();
-				throw new Exception("Possible endless loop detected! schedule cleared. If this was not an error, increase the max checks.");
+				throw new MaxChecksReachedException("Possible endless loop detected! schedule cleared. If this was not an error, increase the max checks.");
 			}
 
 			if (schedule.Count == 0 || currentTime.CompareTo(nextEventsTimeToExecute) < 0)
@@ -98,7 +98,7 @@
 			}
 			catch(Exception ex)
 			{
-				throw new Exception("Error while trying to run event.", ex);
+				throw new Exception("Error while trying to execute event's action.", ex);
 			}
 			finally
 			{
@@ -119,6 +119,14 @@
 				this.action = action;
 				this.timeToExecute = timeToExecute;
 			}
+		}
+
+		/// <summary>
+		/// An exception thrown when maxChecks has been reached.
+		/// </summary>
+		public class MaxChecksReachedException : Exception
+		{
+			public MaxChecksReachedException(string message) : base(message) { }
 		}
 	}
 }
