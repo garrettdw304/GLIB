@@ -4,7 +4,9 @@ namespace GLIB.Inventory
 {
 	public class Inventory<E> where E : class
 	{
-		public delegate Size SizeOf(E element);
+		private const string CONTENTS_CHANGED_OBSOLETE_MESSAGE = "It is recomended to use ElementAdded, ElementMoved and/or ElementRemoved, as these events provide the elements that changed.";
+
+        public delegate Size SizeOf(E element);
 
 		public readonly int X, Y;
 
@@ -13,7 +15,20 @@ namespace GLIB.Inventory
 
 		protected SizeOf sizeOf;
 		private Predicate<E> filter;
+		[Obsolete(CONTENTS_CHANGED_OBSOLETE_MESSAGE)]
 		public event Action ContentsChanged;
+		/// <summary>
+		/// Called when elements have been added to the inventory.
+		/// </summary>
+		public event Action<IEnumerable<Element>> ElementsAdded;
+		/// <summary>
+		/// Called when elements have been moved in the inventory, including an element's rotation.
+		/// </summary>
+		public event Action<IEnumerable<Element>> ElementsMoved;
+		/// <summary>
+		/// Called when elements have been removed from the inventory.
+		/// </summary>
+		public event Action<IEnumerable<Element>> ElementsRemoved;
 
 		public Inventory(int x, int y, SizeOf sizeOf, Predicate<E> filter = null)
 		{
@@ -71,11 +86,12 @@ namespace GLIB.Inventory
 
 			int dictKey = GetNewDictKey();
 
-			elements.Add(dictKey, new Element(element, slot, rotated, dictKey));
+            elements.Add(dictKey, new Element(element, slot, rotated, dictKey));
 
 			SetSlots(slot, size, dictKey);
 
 			ContentsChanged?.Invoke();
+			ElementsAdded?.Invoke(new Element(element, slot, rotated, dictKey).Yield());
 
 			return true;
 		}
@@ -103,6 +119,7 @@ namespace GLIB.Inventory
 			oldEl.rotated = rotated;
 
 			ContentsChanged?.Invoke();
+			ElementsMoved?.Invoke(oldEl.Copy().Yield());
 			return true;
 		}
 
@@ -182,6 +199,7 @@ namespace GLIB.Inventory
 			SetSlots(element.slot, sizeOf(element.value).Rotated(element.rotated));
 
 			ContentsChanged?.Invoke();
+			ElementsRemoved?.Invoke(element.Yield());
 
 			return element.value;
 		}
@@ -224,21 +242,22 @@ namespace GLIB.Inventory
 
 		public bool TryAddAll(IEnumerable<E> elements)
 		{
-			List<E> addedElements = new List<E>();
+			List<Element> addedElements = new List<Element>();
 			foreach (E element in elements)
 			{
-				if (!AddSilently(element))
+				if (!AddSilently(element, out Element added))
 				{
-					foreach (E e in addedElements)
-						RemoveSilently(e);
+					foreach (Element e in addedElements)
+						RemoveSilently(e.value);
 
 					return false;
 				}
 
-				addedElements.Add(element);
+				addedElements.Add(added);
 			}
 
 			ContentsChanged?.Invoke();
+			ElementsAdded?.Invoke(addedElements.Select(x => x.Copy()));
 
 			return true;
 		}
@@ -249,9 +268,11 @@ namespace GLIB.Inventory
 				for (int x = 0; x < X; x++)
 					grid[x, y] = 0;
 
+			List<Element> elsRemoved = elements.Values.ToList();
 			elements.Clear();
 
 			ContentsChanged?.Invoke();
+			ElementsRemoved?.Invoke(elsRemoved);
 		}
 
 		public bool IsEmpty()
@@ -259,17 +280,20 @@ namespace GLIB.Inventory
 			return !elements.Any();
 		}
 
+		[Obsolete(CONTENTS_CHANGED_OBSOLETE_MESSAGE)]
 		public void AddContentsChanged(Action action)
 		{
 			ContentsChanged += action;
 		}
 
-		public void RemoveContentsChanged(Action action)
+        [Obsolete(CONTENTS_CHANGED_OBSOLETE_MESSAGE)]
+        public void RemoveContentsChanged(Action action)
 		{
 			ContentsChanged -= action;
 		}
 
-		public void CallContentsChanged()
+        [Obsolete(CONTENTS_CHANGED_OBSOLETE_MESSAGE)]
+        public void CallContentsChanged()
 		{
 			ContentsChanged?.Invoke();
 		}
@@ -335,8 +359,9 @@ namespace GLIB.Inventory
 			throw new IndexOutOfRangeException();
 		}
 
-		private bool AddSilently(E element)
+		private bool AddSilently(E element, out Element added)
 		{
+			added = null;
 			if (!filter(element))
 				return false;
 
@@ -351,17 +376,19 @@ namespace GLIB.Inventory
 				for (int x = 0; x < X; x++)
 				{
 					Slot slot = new Slot(x, y);
-					if (AddSilently(element, slot, false))
+					if (AddSilently(element, slot, false, out added))
 						return true;
-					else if (AddSilently(element, slot, true))
+					else if (AddSilently(element, slot, true, out added))
 						return true;
 				}
 
 			return false;
 		}
 
-		private bool AddSilently(E element, Slot slot, bool rotated)
+		private bool AddSilently(E element, Slot slot, bool rotated, out Element added)
 		{
+			added = null;
+
 			if (!filter(element))
 				return false;
 
@@ -380,11 +407,13 @@ namespace GLIB.Inventory
 
 			int dictKey = GetNewDictKey();
 
-			elements.Add(dictKey, new Element(element, slot, rotated, dictKey));
+			added = new Element(element, slot, rotated, dictKey);
+
+            elements.Add(dictKey, added);
 
 			SetSlots(slot, size, dictKey);
 
-			return true;
+            return true;
 		}
 
 		private bool RemoveSilently(E element)
