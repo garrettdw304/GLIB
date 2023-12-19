@@ -431,6 +431,11 @@ namespace GLIB.Inventory
 			{
 				return new Element(value, slot, rotated, dictKey);
 			}
+
+            internal IEnumerable<Element> Yield()
+			{
+				yield return this;
+			}
 		}
 
 		public override string ToString()
