@@ -2,16 +2,44 @@
 
 namespace GLIB.Inventory
 {
+	/// <summary>
+	/// An inventory data structure that stores non-resizable multi-celled elements. Elements can be rotated 90 degrees, which is indicated via a boolean where true means the element is rotated 90 degrees. Rotated element's width and height are flipped.
+	/// </summary>
+	/// <typeparam name="E">The type of element to be stored in this Inventory.</typeparam>
 	public class Inventory<E> where E : class
 	{
+		/// <summary>
+		/// A method that calculates the size of an element. The size of an element CANNOT change while inside of the inventory (or the inventory will be corrupted), and as good practice should not change ever.
+		/// </summary>
+		/// <param name="element">The element to get the size of.</param>
+		/// <returns>The size of the element.</returns>
         public delegate Size SizeOf(E element);
 
-		public readonly int X, Y;
+		/// <summary>
+		/// The width of this inventory's grid.
+		/// </summary>
+		public readonly int Width;
+		/// <summary>
+		/// The height of this inventory's grid.
+		/// </summary>
+		public readonly int Height;
 
+		/// <summary>
+		/// The grid used for keeping track of the cells an element is taking up in this inventory.
+		/// </summary>
 		private readonly int[,] grid;
+		/// <summary>
+		/// The elements stored in this inventory.
+		/// </summary>
 		private readonly Dictionary<int, Element> elements;
 
+		/// <summary>
+		/// The SizeOf delegate to be used for finding the size of elements.
+		/// </summary>
 		protected SizeOf sizeOf;
+		/// <summary>
+		/// The inventory's filter. Items added to the inventory are passed through this filter and are only permitted to be added if the filter returns true.
+		/// </summary>
 		private Predicate<E> filter;
 
 		/// <summary>
@@ -27,31 +55,45 @@ namespace GLIB.Inventory
 		/// </summary>
 		public event Action<IReadOnlyCollection<IReadOnlyElement>> ElementsRemoved;
 
-		public Inventory(int x, int y, SizeOf sizeOf, Predicate<E> filter = null)
+		/// <summary>
+		/// Creates a new inventory instance with a grid the size of width by height.
+		/// <para/>If filter is left null, a default filter allowing all items through is used.
+		/// </summary>
+		/// <param name="width">The width (x) of the inventory.</param>
+		/// <param name="height">The height (y) of the inventory.</param>
+		/// <param name="sizeOf">The SizeOf delegate used to get the size of elements.</param>
+		/// <param name="filter">The filter to apply to items being added to the inventory. If left null, a default filter allowing all items through is used.</param>
+		public Inventory(int width, int height, SizeOf sizeOf, Predicate<E> filter = null)
 		{
-			X = x;
-			Y = y;
-			grid = new int[x, y];
+			Width = width;
+			Height = height;
+			grid = new int[width, height];
 			elements = new Dictionary<int, Element>();
 			this.sizeOf = sizeOf;
 			this.filter = filter != null ? filter : x => true;
 		}
 
-		#region public
-		public bool Add(E element)
+        #region public
+        /// <summary>
+        /// Adds an element to this inventory in the first slot it can fit, accounting for both rotations.
+        /// </summary>
+        /// <param name="element"></param>
+        /// <returns>True if the element was added successfully. False if the element was not added because it did not pass the filter or there was no space for it.</returns>
+        /// <exception cref="InvalidSizeException"></exception>
+        public bool Add(E element)
 		{
 			if (!filter(element))
 				return false;
 
 			Size size = sizeOf(element);
 			if (!size.IsPhysical())
-				throw new Exception("The dimentions of the element's size must be greater than 0.");
+				throw new InvalidSizeException("The values of the element's size must be greater than 0.");
 
 			if (Contains(element))
 				return false;
 
-			for (int y = 0; y < Y; y++)
-				for (int x = 0; x < X; x++)
+			for (int y = 0; y < Height; y++)
+				for (int x = 0; x < Width; x++)
 				{
 					Slot slot = new Slot(x, y);
 					if (Add(element, slot, false))
@@ -63,14 +105,22 @@ namespace GLIB.Inventory
 			return false;
 		}
 
-		public bool Add(E element, Slot slot, bool rotated)
+        /// <summary>
+        /// Adds an element to this inventory at the specified slot, rotated accordingly.
+        /// </summary>
+        /// <param name="element">The element to add to this inventory.</param>
+        /// <param name="slot">The slot to add this element at.</param>
+        /// <param name="rotated">The rotation of the element.</param>
+        /// <returns>True if the element passed the filter and could fit into the space specified, false o.w.</returns>
+        /// <exception cref="InvalidSizeException"></exception>
+        public bool Add(E element, Slot slot, bool rotated)
 		{
 			if (!filter(element))
 				return false;
 
 			Size size = sizeOf(element);
 			if (!size.IsPhysical())
-				throw new Exception("The dimentions of the element's size must be greater than 0.");
+				throw new InvalidSizeException("The values of the element's size must be greater than 0.");
 
 			if (Contains(element))
 				return false;
@@ -259,8 +309,8 @@ namespace GLIB.Inventory
 
 		public void Clear()
 		{
-			for (int y = 0; y < Y; y++)
-				for (int x = 0; x < X; x++)
+			for (int y = 0; y < Height; y++)
+				for (int x = 0; x < Width; x++)
 					grid[x, y] = 0;
 
 			List<Element> elsRemoved = elements.Values.ToList();
@@ -306,7 +356,7 @@ namespace GLIB.Inventory
 
 		private bool WillFit(Slot slot, Size size, int ignore = 0)
 		{
-			if (slot.y + size.y - 1 >= Y || slot.x + size.x - 1 >= X)
+			if (slot.y + size.y - 1 >= Height || slot.x + size.x - 1 >= Width)
 				return false;
 
 			for (int y = slot.y; y < slot.y + size.y; y++)
@@ -348,8 +398,8 @@ namespace GLIB.Inventory
 			if (Contains(element))
 				throw new Exception("The element is already present in the inventory.");
 
-			for (int y = 0; y < Y; y++)
-				for (int x = 0; x < X; x++)
+			for (int y = 0; y < Height; y++)
+				for (int x = 0; x < Width; x++)
 				{
 					Slot slot = new Slot(x, y);
 					if (AddSilently(element, slot, false, out added))
@@ -457,9 +507,9 @@ namespace GLIB.Inventory
 		public override string ToString()
 		{
 			StringBuilder sb = new StringBuilder();
-			for (int y = 0; y < Y; y++)
+			for (int y = 0; y < Height; y++)
 			{
-				for (int x = 0; x < X; x++)
+				for (int x = 0; x < Width; x++)
 					sb.Append(grid[x, y] + " ");
 
 				sb.Remove(sb.Length - 1, 1);
