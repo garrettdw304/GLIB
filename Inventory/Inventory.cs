@@ -4,8 +4,6 @@ namespace GLIB.Inventory
 {
 	public class Inventory<E> where E : class
 	{
-		private const string CONTENTS_CHANGED_OBSOLETE_MESSAGE = "It is recomended to use ElementAdded, ElementMoved and/or ElementRemoved, as these events provide the elements that changed.";
-
         public delegate Size SizeOf(E element);
 
 		public readonly int X, Y;
@@ -15,8 +13,7 @@ namespace GLIB.Inventory
 
 		protected SizeOf sizeOf;
 		private Predicate<E> filter;
-		[Obsolete(CONTENTS_CHANGED_OBSOLETE_MESSAGE)]
-		public event Action ContentsChanged;
+
 		/// <summary>
 		/// Called when elements have been added to the inventory.
 		/// </summary>
@@ -90,7 +87,6 @@ namespace GLIB.Inventory
 
 			SetSlots(slot, size, dictKey);
 
-			ContentsChanged?.Invoke();
 			ElementsAdded?.Invoke(new Element(element, slot, rotated, dictKey).Yield());
 
 			return true;
@@ -118,7 +114,6 @@ namespace GLIB.Inventory
 			oldEl.slot = newSlot;
 			oldEl.rotated = rotated;
 
-			ContentsChanged?.Invoke();
 			ElementsMoved?.Invoke(oldEl.Copy().Yield());
 			return true;
 		}
@@ -198,7 +193,6 @@ namespace GLIB.Inventory
 
 			SetSlots(element.slot, sizeOf(element.value).Rotated(element.rotated));
 
-			ContentsChanged?.Invoke();
 			ElementsRemoved?.Invoke(element.Yield());
 
 			return element.value;
@@ -256,7 +250,6 @@ namespace GLIB.Inventory
 				addedElements.Add(added);
 			}
 
-			ContentsChanged?.Invoke();
 			ElementsAdded?.Invoke(addedElements.Select(x => x.Copy()));
 
 			return true;
@@ -271,31 +264,12 @@ namespace GLIB.Inventory
 			List<Element> elsRemoved = elements.Values.ToList();
 			elements.Clear();
 
-			ContentsChanged?.Invoke();
 			ElementsRemoved?.Invoke(elsRemoved);
 		}
 
 		public bool IsEmpty()
 		{
 			return !elements.Any();
-		}
-
-		[Obsolete(CONTENTS_CHANGED_OBSOLETE_MESSAGE)]
-		public void AddContentsChanged(Action action)
-		{
-			ContentsChanged += action;
-		}
-
-        [Obsolete(CONTENTS_CHANGED_OBSOLETE_MESSAGE)]
-        public void RemoveContentsChanged(Action action)
-		{
-			ContentsChanged -= action;
-		}
-
-        [Obsolete(CONTENTS_CHANGED_OBSOLETE_MESSAGE)]
-        public void CallContentsChanged()
-		{
-			ContentsChanged?.Invoke();
 		}
 
 		public bool IsRotated(E element)
