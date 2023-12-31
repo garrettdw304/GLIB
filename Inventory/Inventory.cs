@@ -17,15 +17,15 @@ namespace GLIB.Inventory
 		/// <summary>
 		/// Called when elements have been added to the inventory.
 		/// </summary>
-		public event Action<IEnumerable<Element>> ElementsAdded;
+		public event Action<IReadOnlyCollection<IReadOnlyElement>> ElementsAdded;
 		/// <summary>
 		/// Called when elements have been moved in the inventory, including an element's rotation.
 		/// </summary>
-		public event Action<IEnumerable<Element>> ElementsMoved;
+		public event Action<IReadOnlyCollection<IReadOnlyElement>> ElementsMoved;
 		/// <summary>
 		/// Called when elements have been removed from the inventory.
 		/// </summary>
-		public event Action<IEnumerable<Element>> ElementsRemoved;
+		public event Action<IReadOnlyCollection<IReadOnlyElement>> ElementsRemoved;
 
 		public Inventory(int x, int y, SizeOf sizeOf, Predicate<E> filter = null)
 		{
@@ -83,11 +83,13 @@ namespace GLIB.Inventory
 
 			int dictKey = GetNewDictKey();
 
-            elements.Add(dictKey, new Element(element, slot, rotated, dictKey));
+			Element newEl = new Element(element, slot, rotated, dictKey);
+
+            elements.Add(dictKey, newEl);
 
 			SetSlots(slot, size, dictKey);
 
-			ElementsAdded?.Invoke(new Element(element, slot, rotated, dictKey).Yield());
+			ElementsAdded?.Invoke((IReadOnlyCollection<IReadOnlyElement>)newEl.Copy().Yield());
 
 			return true;
 		}
@@ -101,20 +103,20 @@ namespace GLIB.Inventory
 
 			if (!Contains(element))
 				throw new Exception("The element is not present in the inventory.");
-			Element oldEl = elements.Values.First(x => x.value == element);
-			Size oldSize = sizeOfEl.Rotated(oldEl.rotated);
-			Slot oldSlot = oldEl.slot;
-			int dictKey = oldEl.dictKey;
+			Element oldEl = elements.Values.First(x => x.Value == element);
+			Size oldSize = sizeOfEl.Rotated(oldEl.Rotated);
+			Slot oldSlot = oldEl.Slot;
+			int dictKey = oldEl.DictKey;
 
 			if (!WillFit(newSlot, newSize, dictKey))
 				return false;
 
 			SetSlots(oldSlot, oldSize, 0);
 			SetSlots(newSlot, newSize, dictKey);
-			oldEl.slot = newSlot;
-			oldEl.rotated = rotated;
+			oldEl.Slot = newSlot;
+			oldEl.Rotated = rotated;
 
-			ElementsMoved?.Invoke(oldEl.Copy().Yield());
+			ElementsMoved?.Invoke((IReadOnlyCollection<IReadOnlyElement>)oldEl.Copy().Yield());
 			return true;
 		}
 
@@ -137,19 +139,19 @@ namespace GLIB.Inventory
 			if (grid[slot.x, slot.y] == 0)
 				return null;
 
-			return elements[grid[slot.x, slot.y]].value;
+			return elements[grid[slot.x, slot.y]].Value;
 		}
 
 		public E GetOne()
 		{
-			return IsEmpty() ? null : elements.Values.ElementAt(0).value;
+			return IsEmpty() ? null : elements.Values.ElementAt(0).Value;
 		}
 
 		public List<E> GetAll()
 		{
 			List<E> list = new List<E>();
 			foreach (Element e in elements.Values)
-				list.Add(e.value);
+				list.Add(e.Value);
 
 			return list;
 		}
@@ -157,7 +159,7 @@ namespace GLIB.Inventory
 		public Element GetElement(E element)
 		{
 			foreach (Element e in elements.Values)
-				if (e.value == element)
+				if (e.Value == element)
 					return e.Copy();
 
 			return null;
@@ -176,9 +178,9 @@ namespace GLIB.Inventory
 		public bool Remove(E element)
 		{
 			foreach (Element e in elements.Values)
-				if (e.value == element)
+				if (e.Value == element)
 				{
-					Remove(e.slot);
+					Remove(e.Slot);
 					return true;
 				}
 
@@ -189,19 +191,19 @@ namespace GLIB.Inventory
 		{
 			Element element = elements[grid[slot.x, slot.y]];
 
-			elements.Remove(element.dictKey);
+			elements.Remove(element.DictKey);
 
-			SetSlots(element.slot, sizeOf(element.value).Rotated(element.rotated));
+			SetSlots(element.Slot, sizeOf(element.Value).Rotated(element.Rotated));
 
-			ElementsRemoved?.Invoke(element.Yield());
+			ElementsRemoved?.Invoke((IReadOnlyCollection<IReadOnlyElement>)element.Yield());
 
-			return element.value;
+			return element.Value;
 		}
 
 		public bool Contains(E element)
 		{
 			foreach (Element e in elements.Values)
-				if (e.value == element)
+				if (e.Value == element)
 					return true;
 
 			return false;
@@ -210,7 +212,7 @@ namespace GLIB.Inventory
 		public bool Contains(Predicate<E> predicate)
 		{
 			foreach (Element e in elements.Values)
-				if (predicate(e.value))
+				if (predicate(e.Value))
 					return true;
 
 			return false;
@@ -219,8 +221,8 @@ namespace GLIB.Inventory
 		public Slot Find(E element)
 		{
 			foreach (Element e in elements.Values)
-				if (e.value == element)
-					return e.slot;
+				if (e.Value == element)
+					return e.Slot;
 
 			return new Slot(-1, -1);
 		}
@@ -228,8 +230,8 @@ namespace GLIB.Inventory
 		public Slot Find(Predicate<E> predicate)
 		{
 			foreach (Element e in elements.Values)
-				if (predicate(e.value))
-					return e.slot;
+				if (predicate(e.Value))
+					return e.Slot;
 
 			return new Slot(-1, -1);
 		}
@@ -242,7 +244,7 @@ namespace GLIB.Inventory
 				if (!AddSilently(element, out Element added))
 				{
 					foreach (Element e in addedElements)
-						RemoveSilently(e.value);
+						RemoveSilently(e.Value);
 
 					return false;
 				}
@@ -250,7 +252,7 @@ namespace GLIB.Inventory
 				addedElements.Add(added);
 			}
 
-			ElementsAdded?.Invoke(addedElements.Select(x => x.Copy()));
+			ElementsAdded?.Invoke((IReadOnlyCollection<IReadOnlyElement>)addedElements.Select(x => x.Copy()));
 
 			return true;
 		}
@@ -274,7 +276,7 @@ namespace GLIB.Inventory
 
 		public bool IsRotated(E element)
 		{
-			return elements.Values.First(x => x.value == element).rotated;
+			return elements.Values.First(x => x.Value == element).Rotated;
 		}
 
         /// <summary>
@@ -318,8 +320,8 @@ namespace GLIB.Inventory
 		private int GetDictKey(E e)
 		{
 			foreach (Element e2 in elements.Values)
-				if (e2.value == e)
-					return e2.dictKey;
+				if (e2.Value == e)
+					return e2.DictKey;
 
 			return 0;
 		}
@@ -393,9 +395,9 @@ namespace GLIB.Inventory
 		private bool RemoveSilently(E element)
 		{
 			foreach (Element e in elements.Values)
-				if (e.value == element)
+				if (e.Value == element)
 				{
-					RemoveSilently(e.slot);
+					RemoveSilently(e.Slot);
 					return true;
 				}
 
@@ -406,39 +408,50 @@ namespace GLIB.Inventory
 		{
 			Element element = elements[grid[slot.x, slot.y]];
 
-			elements.Remove(element.dictKey);
+			elements.Remove(element.DictKey);
 
-			SetSlots(element.slot, sizeOf(element.value).Rotated(element.rotated));
+			SetSlots(element.Slot, sizeOf(element.Value).Rotated(element.Rotated));
 
-			return element.value;
+			return element.Value;
 		}
 		#endregion private
 
-		public class Element
+		public class Element : IReadOnlyElement
 		{
-			public readonly E value;
-			public readonly int dictKey;
+			public E Value { get; }
+			public int DictKey { get; }
 
-			public Slot slot;
-			public bool rotated;
+			public Slot Slot { get; set; }
+			public bool Rotated { get; set; }
 
 			public Element(E value, Slot slot, bool rotated, int dictKey)
 			{
-				this.value = value;
-				this.dictKey = dictKey;
-				this.slot = slot;
-				this.rotated = rotated;
+				Value = value;
+				DictKey = dictKey;
+				Slot = slot;
+				Rotated = rotated;
 			}
 
 			public Element Copy()
 			{
-				return new Element(value, slot, rotated, dictKey);
+				return new Element(Value, Slot, Rotated, DictKey);
 			}
 
             internal IEnumerable<Element> Yield()
 			{
 				yield return this;
 			}
+		}
+
+		/// <summary>
+		/// Exposes the getters of Element's properties.
+		/// </summary>
+		public interface IReadOnlyElement
+		{
+			public E Value { get; }
+			public int DictKey { get; }
+			public Slot Slot { get; }
+			public bool Rotated { get; }
 		}
 
 		public override string ToString()
