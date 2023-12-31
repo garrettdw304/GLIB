@@ -164,7 +164,5 @@
 		{
 			public MaxChecksReachedException(string message) : base(message) { }
 		}
-
-		public class EventInvokedExceptionException
 	}
 }
